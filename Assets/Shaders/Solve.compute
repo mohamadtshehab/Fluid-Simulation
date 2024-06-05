@@ -1,0 +1,36 @@
+#pragma kernel Solve
+
+RWTexture2D<float4> Solution;
+RWTexture2D<float4> X;
+RWTexture2D<float4> X0;
+float A;
+float C;
+int Iterations;
+int N;
+
+[numthreads(32,32,1)]
+void Solve(uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    X0.GetDimensions(width, height);
+
+    float cRecip = 1.0f / C;
+
+    float4 q0C = X0.Load(int3(id.x, id.y, 0));
+    float4 qR = float4(0, 0, 0, 0);
+    float4 qL = float4(0, 0, 0, 0);
+    float4 qT = float4(0, 0, 0, 0);
+    float4 qB = float4(0, 0, 0, 0);
+
+    if (id.x + 1 < width)
+        qR = X.Load(int3(id.x + 1, id.y, 0));
+    if (id.x > 0)
+        qL = X.Load(int3(id.x - 1, id.y, 0));
+    if (id.y + 1 < height)
+        qT = X.Load(int3(id.x, id.y + 1, 0));
+    if (id.y > 0)
+        qB = X.Load(int3(id.x, id.y - 1, 0));
+
+    float4 newValue = (q0C + A * (qR + qL + qT + qB)) * cRecip;
+    Solution[id.xy] = newValue;
+}

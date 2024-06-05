@@ -1,0 +1,46 @@
+
+#pragma kernel Advect
+
+RWTexture2D<float4> Quantity;
+RWTexture2D<float4> ToAdvectQuantity;
+RWTexture2D<float4> ToAdvectOverVelocity;
+float TimeStep;
+int N;
+
+[numthreads(32,32,1)]
+void Advect (uint3 id : SV_DispatchThreadID)
+{
+    float dtx, dty = TimeStep * (N - 2);
+    float2 dt = float2(dtx, dty);
+    float nFloat = N;
+    float2 coordinates = id.xy;
+    float2 XY = coordinates - ToAdvectOverVelocity.Load(int3(coordinates, 0));
+
+    if (XY.x < 0.5f) XY.x = 0.5f;
+    if (XY.x > nFloat + 0.5f) XY.x = nFloat + 0.5f;
+    int i0 = floor(XY.x);
+    int i1 = i0 + 1;
+
+    if (XY.y < 0.5f) XY.y = 0.5f;
+    if (XY.y > nFloat + 0.5f) XY.y = nFloat + 0.5f;
+    int j0 = floor(XY.y);
+    int j1 = j0 + 1;
+
+    float s1 = XY.x - i0;
+    float s0 = 1.0f - s1;
+    float t1 = XY.y - j0;
+    float t0 = 1.0f - t1;
+
+    float4 QuantityI0J0 = ToAdvectQuantity.Load(int3(i0, j0, 0));
+    float4 QuantityI0J1 = ToAdvectQuantity.Load(int3(i0, j1, 0));
+    float4 QuantityI1J0 = ToAdvectQuantity.Load(int3(i1, j0, 0));
+    float4 QuantityI1J1 = ToAdvectQuantity.Load(int3(i1, j1, 0));
+
+    Quantity[coordinates] = s0 * ((t0 * QuantityI0J0) + (t1 * QuantityI0J1)) 
+                            +
+                            s1 * ((t0 * QuantityI1J0) + (t1 * QuantityI1J1));
+
+}
+
+
+

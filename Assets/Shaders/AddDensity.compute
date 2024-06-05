@@ -1,0 +1,21 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel AddDensity
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Density;
+RWTexture2D<float4> ResultingDensity;
+
+int X;
+int Y;
+float Amount;
+
+[numthreads(8, 8, 1)]
+void AddDensity(uint3 id : SV_DispatchThreadID)
+{
+    float4 currentDensity = Density.Load(int3(id.xy, 0));
+    float4 newDensity = currentDensity + float4(Amount, Amount, 0.0f, 0.0f);
+    newDensity.a = currentDensity.a;
+    Density[id.xy] = newDensity;
+    ResultingDensity[id.xy] = newDensity;
+}
