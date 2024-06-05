@@ -38,7 +38,6 @@ public class FluidSimulation : MonoBehaviour
     void Start()
     {
         InitializeQuantities();
-        InitializeRenderTextures();
         BindMaterial();
     }
 
@@ -57,13 +56,13 @@ public class FluidSimulation : MonoBehaviour
 
     void InitializeQuantities()
     {
-        N = 8;
+        N = 256;
         TimeStep = 0.01f;
-        Iterations = 2;
+        Iterations = 50;
         Diffusion = 0;
         Viscosity = 0;
 
-        // Initialize Texture2D
+        // Initialize RenderTexture
         Velocity = CreateRenderTexture(N);
         PreviousVelocity = CreateRenderTexture(N);
         Pressure = CreateRenderTexture(N);
@@ -71,15 +70,12 @@ public class FluidSimulation : MonoBehaviour
         PreviousDensity = CreateRenderTexture(N);
 
         // Initialize Velocity
-        InitializeRenderTexture(Velocity, new Color(0.0f, 0.0f, 0.0f, 1.0f));
-        InitializeRenderTexture(PreviousVelocity, new Color(0.0f, 0.0f, 0.0f, 1.0f));
-        InitializeRenderTexture(Density, new Color(0.0f, 0.0f, 0.0f, 1.0f));
-        InitializeRenderTexture(PreviousDensity, new Color(0.0f, 0.0f, 0.0f, 1.0f));
-        InitializeRenderTexture(Pressure, new Color(0.0f, 0.0f, 0.0f, 1.0f));
-    }
- 
-    void InitializeRenderTextures()
-    {
+        InitializeRandomRenderTexture(Velocity);
+        InitializeRandomRenderTexture(PreviousVelocity);
+        InitializeRandomRenderTexture(Density);
+        InitializeRandomRenderTexture(PreviousDensity);
+        InitializeRandomRenderTexture(Pressure);
+
         AdvectionStorage = CreateRenderTexture(N);
         SolutionStorage = CreateRenderTexture(N);
         DivergenceStorage = CreateRenderTexture(N);
@@ -87,6 +83,7 @@ public class FluidSimulation : MonoBehaviour
         ResultingDensity = CreateRenderTexture(N);
         ResultingVelocity = CreateRenderTexture(N);
     }
+
 
     void InitializeRenderTexture(RenderTexture rt, Color color)
     {
@@ -242,10 +239,10 @@ public class FluidSimulation : MonoBehaviour
         RenderTexture diffusedPreviousVelocity = Diffuse(PreviousVelocity, Velocity, Viscosity);
         //Project diffused Previous Velocity (Result is stored in previous velocity).
         RenderTexture correctedPreviousVelocity = Project(diffusedPreviousVelocity);
+        Graphics.Blit(correctedPreviousVelocity, PreviousVelocity);
 
         //Advect current velocity over previous velocity (result is stored in current velocity)
-        RenderTexture advectedCurrentVelocity = Advect(Velocity, correctedPreviousVelocity);
-
+        RenderTexture advectedCurrentVelocity = Advect(Velocity, PreviousVelocity);
         //Project current advected velocity (Result is stored in current velocity)
         RenderTexture correctedCurrentVelocity = Project(advectedCurrentVelocity);
         Graphics.Blit(correctedCurrentVelocity, Velocity);
@@ -303,7 +300,6 @@ public class FluidSimulation : MonoBehaviour
         V.Apply();
         Graphics.Blit(V, Velocity);
         V = null;
-
     }
 
     //void AddDensity(int x, int y, float amount)
@@ -336,7 +332,7 @@ public class FluidSimulation : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             AddVelocity((int)(N / 2), (int)(N / 2), 10.0f, 10.0f);
-            AddDensity((int)(N / 2), (int)(N / 2), 10.0f);
+            AddDensity((int)(N / 2), (int)(N / 2), 10000);
         }
             
     }
