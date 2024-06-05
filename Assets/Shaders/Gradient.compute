@@ -1,0 +1,42 @@
+#pragma kernel Gradient
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> ResultingVelocity;
+RWTexture2D<float> Pressure;
+RWTexture2D<float4> Velocity;
+int N;
+
+[numthreads(32,32,1)]
+void Gradient (uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    Velocity.GetDimensions(width, height);
+    float2 currentVelocity = Velocity.Load(int3(id.x, id.y, 0)).xy;
+
+    float rightPressure, leftPressure, topPressure, bottomPressure;
+
+    if (id.x + 1 < width)
+        rightPressure = Pressure.Load(int3(id.x + 1, id.y, 0));
+    else
+        rightPressure = Pressure.Load(int3(id.x, id.y, 0));
+
+    if (id.x > 0)
+        leftPressure = Pressure.Load(int3(id.x - 1, id.y, 0));
+    else
+        leftPressure = Pressure.Load(int3(id.x, id.y, 0));
+
+    if (id.y + 1 < height)
+        topPressure = Pressure.Load(int3(id.x, id.y + 1, 0));
+    else
+        topPressure = Pressure.Load(int3(id.x, id.y, 0));
+
+    if (id.y > 0)
+        bottomPressure = Pressure.Load(int3(id.x, id.y - 1, 0));
+    else
+        bottomPressure = Pressure.Load(int3(id.x, id.y, 0));
+
+    float2 pressureGradient = float2(rightPressure - leftPressure, topPressure - bottomPressure);
+
+    ResultingVelocity[id.xy] = float4(currentVelocity - 0.5f * pressureGradient / N, 0.0f, 0.0f);
+}

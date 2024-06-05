@@ -1,0 +1,48 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Diverge
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Divergence;
+RWTexture2D<float4> Velocity;
+int N;
+
+[numthreads(32,32,1)]
+void Diverge(uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    Velocity.GetDimensions(width, height);
+
+    float rX = 0.0f;
+    float lX = 0.0f;
+    float tY = 0.0f;
+    float bY = 0.0f;
+
+    if (id.x + 1 < width)
+        rX = Velocity.Load(int3(id.x + 1, id.y, 0)).x;
+    else
+        rX = Velocity.Load(int3(id.x, id.y, 0)).x;
+
+    if (id.x > 0)
+        lX = Velocity.Load(int3(id.x - 1, id.y, 0)).x;
+    else
+        lX = Velocity.Load(int3(id.x, id.y, 0)).x;
+
+    if (id.y + 1 < height)
+        tY = Velocity.Load(int3(id.x, id.y + 1, 0)).y;
+    else
+        tY = Velocity.Load(int3(id.x, id.y, 0)).y;
+
+    if (id.y > 0)
+        bY = Velocity.Load(int3(id.x, id.y - 1, 0)).y;
+    else
+        bY = Velocity.Load(int3(id.x, id.y, 0)).y;
+
+    Divergence[id.xy] = -0.5f * (rX - lX + tY - bY) / N;
+}
+
+
+
+
+
+
