@@ -8,7 +8,7 @@ float C;
 int Iterations;
 int N;
 
-[numthreads(32,32,1)]
+[numthreads(8,8,1)]
 void Solve(uint3 id : SV_DispatchThreadID)
 {
     uint width, height;

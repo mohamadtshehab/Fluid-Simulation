@@ -10,6 +10,8 @@ public class FluidSimulation : MonoBehaviour
     public ComputeShader GradientShader;
     public ComputeShader AddDensityShader;
     public ComputeShader AddVelocityShader;
+    public ComputeShader CopyShader;
+
     //It's like temp.. but it is not.
     public RenderTexture AdvectionStorage;
     public RenderTexture SolutionStorage;
@@ -43,9 +45,7 @@ public class FluidSimulation : MonoBehaviour
 
     void Update()
     {
-        BindMaterial();
         Pipeline();
-        HandleMouseInput();
     }
 
     void BindMaterial()
@@ -56,11 +56,11 @@ public class FluidSimulation : MonoBehaviour
 
     void InitializeQuantities()
     {
-        N = 256;
-        TimeStep = 0.01f;
-        Iterations = 50;
-        Diffusion = 0;
-        Viscosity = 0;
+        N = 512;
+        TimeStep = 1;
+        Iterations = 30;
+        Diffusion = 0.0001f;
+        Viscosity = 0.0001f;
 
         // Initialize RenderTexture
         Velocity = CreateRenderTexture(N);
@@ -106,7 +106,8 @@ public class FluidSimulation : MonoBehaviour
         {
             for (int x = 0; x < t.width; x++)
             {
-                t.SetPixel(x, y, new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value, 1.0f));
+                float randomValue = UnityEngine.Random.value;
+                t.SetPixel(x, y, new Color(randomValue, randomValue, randomValue, 1.0f));
             }
         }
         t.Apply();
@@ -175,10 +176,10 @@ public class FluidSimulation : MonoBehaviour
         SolveShader.SetTexture(kernel, "X0", x0);
         SolveShader.SetFloat("A", a);
         SolveShader.SetFloat("C", c);
-        for (int i = 0; i < Iterations; i++)
+        for (int i = 0; i < Iterations; ++i)
         {
             DispatchShader(SolveShader, kernel);
-            Graphics.Blit(SolutionStorage, x);
+            Copy(SolutionStorage, x);
         }
         return SolutionStorage;
     }
@@ -206,7 +207,6 @@ public class FluidSimulation : MonoBehaviour
 
     RenderTexture Advect(RenderTexture quantity, RenderTexture toAdvectOverVelocity)
     {
-        //maybe pass PreviousVelocity as a parameter
         int kernel = AdvectShader.FindKernel("Advect");
         AdvectShader.SetTexture(kernel, "Quantity", AdvectionStorage);
         AdvectShader.SetTexture(kernel, "ToAdvectQuantity", quantity);
@@ -233,27 +233,35 @@ public class FluidSimulation : MonoBehaviour
         return Gradient(velocity, solvedPressure);
     }
 
+    public void Copy(RenderTexture source, RenderTexture target)
+    {
+        int kernel = CopyShader.FindKernel("Copy");
+        CopyShader.SetTexture(kernel, "Target", target);
+        CopyShader.SetTexture(kernel, "Source", source);
+        DispatchShader(CopyShader, kernel);
+    }
+
     public void Pipeline()
     {
         //Diffuse Previous Velocity over The current Velocity (Result is stored in previous velocity)
         RenderTexture diffusedPreviousVelocity = Diffuse(PreviousVelocity, Velocity, Viscosity);
         //Project diffused Previous Velocity (Result is stored in previous velocity).
         RenderTexture correctedPreviousVelocity = Project(diffusedPreviousVelocity);
-        Graphics.Blit(correctedPreviousVelocity, PreviousVelocity);
+        Copy(correctedPreviousVelocity, PreviousVelocity);
 
         //Advect current velocity over previous velocity (result is stored in current velocity)
         RenderTexture advectedCurrentVelocity = Advect(Velocity, PreviousVelocity);
         //Project current advected velocity (Result is stored in current velocity)
         RenderTexture correctedCurrentVelocity = Project(advectedCurrentVelocity);
-        Graphics.Blit(correctedCurrentVelocity, Velocity);
+        Copy(correctedCurrentVelocity, Velocity);
 
         //Diffuse Previous Density over The current Density (Result is stored in previous Density)
         RenderTexture diffusedPreviousDensity = Diffuse(PreviousDensity, Density, Diffusion);
-        Graphics.Blit(diffusedPreviousDensity, PreviousDensity);
+        Copy(diffusedPreviousDensity, PreviousDensity);
 
         //Advect current Density over current velocity (result is stored in current density)
         RenderTexture advectedCurrentDensity = Advect(Density, Velocity);
-        Graphics.Blit(advectedCurrentDensity, Density);
+        Copy(advectedCurrentDensity, Density);
 
     }
 
@@ -270,7 +278,6 @@ public class FluidSimulation : MonoBehaviour
         var rt = new RenderTexture(texture.width, texture.height, 0)
         {
             enableRandomWrite = true,
-            format = RenderTextureFormat.ARGBFloat
         };
         rt.Create();
         Graphics.Blit(texture, rt);

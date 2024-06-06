@@ -218,6 +218,7 @@ GameObject:
   - component: {fileID: 1343213570}
   - component: {fileID: 1343213569}
   - component: {fileID: 1343213568}
+  - component: {fileID: 1343213571}
   - component: {fileID: 1343213567}
   m_Layer: 0
   m_Name: Quad
@@ -305,3 +306,40 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1343213571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1343213566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a643537b38f9254bae73a9c438b84b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AdvectShader: {fileID: 7200000, guid: 654d071b9123b864a9e20b32d58d452d, type: 3}
+  SolveShader: {fileID: 7200000, guid: dd3a847dfca0ba843be0ee199bb486a7, type: 3}
+  DivergeShader: {fileID: 7200000, guid: e682e19cff3694b4cb439b561fc5bdeb, type: 3}
+  GradientShader: {fileID: 7200000, guid: 417c6f18314621e4e8102ebc5782dc19, type: 3}
+  AddDensityShader: {fileID: 0}
+  AddVelocityShader: {fileID: 0}
+  CopyShader: {fileID: 7200000, guid: 145f6bb4ce77dab4d8b8573c8debebdc, type: 3}
+  AdvectionStorage: {fileID: 0}
+  SolutionStorage: {fileID: 0}
+  DivergenceStorage: {fileID: 0}
+  GradientStorage: {fileID: 0}
+  ResultingDensity: {fileID: 0}
+  ResultingVelocity: {fileID: 0}
+  Pressure: {fileID: 0}
+  PreviousVelocity: {fileID: 0}
+  Velocity: {fileID: 0}
+  Density: {fileID: 0}
+  PreviousDensity: {fileID: 0}
+  N: 0
+  TimeStep: 0
+  Iterations: 0
+  Diffusion: 0
+  Viscosity: 0
+  Quad: {fileID: 1343213566}
+  material: {fileID: 2100000, guid: b60c1c64d0df79b43bcf5c026db079d2, type: 2}
