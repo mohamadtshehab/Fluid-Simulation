@@ -7,7 +7,7 @@ RWTexture2D<float4> ToAdvectOverVelocity;
 float TimeStep;
 int N;
 
-[numthreads(8,8,1)]
+[numthreads(32,32,1)]
 void Advect (uint3 id : SV_DispatchThreadID)
 {
     float dtx, dty = TimeStep * (N - 2);

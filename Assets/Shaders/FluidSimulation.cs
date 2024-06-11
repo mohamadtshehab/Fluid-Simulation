@@ -58,9 +58,9 @@ public class FluidSimulation : MonoBehaviour
     {
         N = 512;
         TimeStep = 1;
-        Iterations = 30;
-        Diffusion = 0.0001f;
-        Viscosity = 0.0001f;
+        Iterations = 100;
+        Diffusion = 10f;
+        Viscosity = 10f;
 
         // Initialize RenderTexture
         Velocity = CreateRenderTexture(N);
@@ -71,9 +71,9 @@ public class FluidSimulation : MonoBehaviour
 
         // Initialize Velocity
         InitializeRandomRenderTexture(Velocity);
-        InitializeRandomRenderTexture(PreviousVelocity);
+        InitializeRenderTexture(PreviousVelocity, Color.black);
         InitializeRandomRenderTexture(Density);
-        InitializeRandomRenderTexture(PreviousDensity);
+        InitializeRenderTexture(PreviousDensity, Color.black);
         InitializeRandomRenderTexture(Pressure);
 
         AdvectionStorage = CreateRenderTexture(N);
@@ -156,15 +156,15 @@ public class FluidSimulation : MonoBehaviour
                 texture.SetPixel(x, y, color);
             }
         }
-        texture.Apply();
+        texture.Apply();   
     }
 
 
 
     void DispatchShader(ComputeShader shader, int kernel)
     {
-        int threadGroupsX = Mathf.CeilToInt(N / 8.0f);
-        int threadGroupsY = Mathf.CeilToInt(N / 8.0f);
+        int threadGroupsX = Mathf.CeilToInt(N / 32.0f);
+        int threadGroupsY = Mathf.CeilToInt(N / 32.0f);
         shader.Dispatch(kernel, threadGroupsX, threadGroupsY, 1);
     }
 
@@ -176,11 +176,12 @@ public class FluidSimulation : MonoBehaviour
         SolveShader.SetTexture(kernel, "X0", x0);
         SolveShader.SetFloat("A", a);
         SolveShader.SetFloat("C", c);
-        for (int i = 0; i < Iterations; ++i)
-        {
+        SolveShader.SetInt("Iterations", Iterations);
+        //for (int i = 0; i < Iterations; ++i)
+        //{
             DispatchShader(SolveShader, kernel);
-            Copy(SolutionStorage, x);
-        }
+        //    Copy(SolutionStorage, x);
+        //}
         return SolutionStorage;
     }
 

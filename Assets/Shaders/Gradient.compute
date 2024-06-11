@@ -7,7 +7,7 @@ RWTexture2D<float> Pressure;
 RWTexture2D<float4> Velocity;
 int N;
 
-[numthreads(8,8,1)]
+[numthreads(32,32,1)]
 void Gradient (uint3 id : SV_DispatchThreadID)
 {
     uint width, height;
